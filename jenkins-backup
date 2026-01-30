@@ -1,0 +1,22 @@
+pipeline {
+agent {
+ label " Built-in"
+} 
+stages {
+  stage ('jenkins-backup') {
+    steps {
+      sh """
+         cd /var/lib
+        zip $(WORKSPACE)/jenkinsbackup.zip.jenkins
+       """
+    }
+  }
+ stage ('upload into s3 bucket') {
+   steps {
+    scripts{
+     
+    }
+   }
+ }
+}
+}
