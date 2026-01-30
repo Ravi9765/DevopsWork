@@ -1,22 +1,48 @@
 pipeline {
-agent {
- label " Built-in"
-} 
-stages {
-  stage ('jenkins-backup') {
-    steps {
-      sh """
-         cd /var/lib
-        zip $(WORKSPACE)/jenkinsbackup.zip.jenkins
-       """
+    agent any
+
+    stages {
+
+        stage('jenkins backup') {
+            steps {
+                sh 'mkdir -p ${WORKSPACE}'
+
+                dir('/root/.jenkins') {
+                    sh '''
+                        zip -r ${WORKSPACE}/jenkinsbackup.zip .
+                    '''
+                }
+            }
+        }
+
+        stage('upload to s3 bucket') {
+            steps {
+                script {
+                    s3Upload(
+                        consoleLogLevel: 'INFO',
+                        dontSetBuildResultOnFailure: false,
+                        dontWaitForConcurrentBuildCompletion: false,
+                        entries: [[
+                            bucket: 'jenkinsbackup-mb1',
+                            excludedFile: '',
+                            flatten: false,
+                            gzipFiles: false,
+                            keepForever: false,
+                            managedArtifacts: false,
+                            noUploadOnFailure: false,
+                            selectedRegion: 'ap-south-1',
+                            showDirectlyInBrowser: false,
+                            sourceFile: 'jenkinsbackup.zip',
+                            storageClass: 'STANDARD',
+                            uploadFromSlave: false,
+                            useServerSideEncryption: false
+                        ]],
+                        pluginFailureResultConstraint: 'FAILURE',
+                        profileName: 's3-backup',
+                        userMetadata: []
+                    )
+                }
+            }
+        }
     }
-  }
- stage ('upload into s3 bucket') {
-   steps {
-    scripts{
-     
-    }
-   }
- }
-}
 }
