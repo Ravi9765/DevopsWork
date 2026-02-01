@@ -1,46 +1,20 @@
 pipeline {
-    agent any
-
+    agent {
+        label 'built-in'
+    }
     stages {
-
-        stage('jenkins backup') {
+        stage ('backup') {
             steps {
                 sh 'mkdir -p ${WORKSPACE}'
-
                 dir('/root/.jenkins') {
-                    sh '''
-                        zip -r ${WORKSPACE}/jenkinsbackup.zip .
-                    '''
+                    sh 'zip -r ${WORKSPACE}/.jenkins.zip .'
                 }
             }
         }
-
-        stage('upload to s3 bucket') {
+        stage ('upload backupfile to s3bucket') {
             steps {
                 script {
-                    s3Upload(
-                        consoleLogLevel: 'INFO',
-                        dontSetBuildResultOnFailure: false,
-                        dontWaitForConcurrentBuildCompletion: false,
-                        entries: [[
-                            bucket: 'jenkinsbackup-mb1',
-                            excludedFile: '',
-                            flatten: false,
-                            gzipFiles: false,
-                            keepForever: false,
-                            managedArtifacts: false,
-                            noUploadOnFailure: false,
-                            selectedRegion: 'ap-south-1',
-                            showDirectlyInBrowser: false,
-                            sourceFile: 'jenkinsbackup.zip',
-                            storageClass: 'STANDARD',
-                            uploadFromSlave: false,
-                            useServerSideEncryption: false
-                        ]],
-                        pluginFailureResultConstraint: 'FAILURE',
-                        profileName: 's3-backup',
-                        userMetadata: []
-                    )
+                    s3Upload consoleLogLevel: 'INFO', dontSetBuildResultOnFailure: false, dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'jenkinsbackup-mb1', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: false, selectedRegion: 'ap-south-1', showDirectlyInBrowser: false, sourceFile: '*.zip', storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 's3backup', userMetadata: []
                 }
             }
         }
